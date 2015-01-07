@@ -39,7 +39,7 @@ wss.on('connection', function (ws) {
 	console.log('socket connected');
 	setTimeout(function () {
 		console.log('sending ping');
-		ws.send(JSON.stringify({ping: 'stuff'}));
+		ws.send(JSON.stringify({message: "content_cancel",request_id: "rid"}));
 	},5000);
 
 
