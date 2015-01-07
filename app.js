@@ -3,8 +3,8 @@
 var express = require('express');
 var http = require('http')
 var path = require('path');
-var socketio = require('socket.io');
 var utils = require('./utils');
+var WebSocketServer = require('ws').Server;
 
 var app = express();
 
@@ -31,23 +31,21 @@ var webserver = http.createServer(app).listen(app.get('port'), function(){
 	console.log("Express server listening on port " + app.get('port'));
 });
 
-// Socket IO
-var io = socketio.listen(webserver);
+var wss = new WebSocketServer({server: webserver});
 
-io.sockets.on('connection', function (socket) {
+// Socket IO
+
+wss.on('connection', function (ws) {
 	console.log('socket connected');
 	setTimeout(function () {
 		console.log('sending ping');
-		socket.emit('ping', {data: 'stuff'});
+		ws.send(JSON.stringify({ping: 'stuff'}));
 	},5000);
 
 
-	socket.on('pong', function () {
+	ws.on('message', function (message) {
 		console.log('got pong from socket');
-		setTimeout(function () {
-			console.log('sending ping')
-			// socket.emit('ping', {data: 'stuff'});
-		},1000);
+		console.log(message);
 	});
 });
 
