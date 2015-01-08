@@ -31,10 +31,15 @@ var webserver = http.createServer(app).listen(app.get('port'), function(){
 	console.log("Express server listening on port " + app.get('port'));
 });
 
+
+app.get('/', function (req, res){
+	res.render('index', { title: 'Hello World' });
+});
+
 var wss = new WebSocketServer({server: webserver});
 
-// Socket IO
-
+// Websocket Endpoint:
+// ======================
 wss.on('connection', function (ws) {
 	console.log('socket connected');
 	setTimeout(function () {
@@ -49,22 +54,19 @@ wss.on('connection', function (ws) {
 	});
 });
 
-
-app.get('/', function (req, res){
-	res.render('index', { title: 'Hello World' });
-});
-
 // Director Endpoints:
+// ======================
 app.post('/v1/content', function (req, res){
 	console.log('got full content, awesome!', req.body);
-	res.json({status: 200});
+	res.json({status: 0});
 });
 
 // UGC Endpoints:
+// ======================
 app.post('/v1/sample', function (req, res){
 	console.log('got sample', req.body);
 	res.json({
-		status: 200,
+		status: 0,
 		response: {
 			content_id: 'awesomeContentId'
 		}
@@ -73,7 +75,7 @@ app.post('/v1/sample', function (req, res){
 
 app.post('/v1/sample/:content_id', function (req, res){
 	console.log('got sample update with content_id:', req.params.content_id);
-	res.json({status: 200});
+	res.json({status: 0});
 });
 
 
