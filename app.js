@@ -61,7 +61,7 @@ app.post('/v1/sample', function (req, res){
 	});
 });
 
-app.post('/v1/sample/:content_id', function (req, res){
+app.put('/v1/sample/:content_id', function (req, res){
 	console.log('got sample update with content_id:', req.params.content_id);
 	res.json({status: 0});
 });
@@ -79,7 +79,7 @@ app.post('/v1/device/register/', function (req, res){
 	});
 });
 
-app.post('/v1/device/parameter/:client_id/', function (req, res){
+app.put('/v1/device/parameter/:client_id/', function (req, res){
 	console.log('got device parameters from', req.params.client_id, req.body);
 	res.json({status: 0});
 });
