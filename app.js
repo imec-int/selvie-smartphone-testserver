@@ -54,23 +54,26 @@ app.get('/', function (req, res){
 	res.render('index', { title: 'Hello World' });
 });
 
-app.post('/api/test', function (req, res){
-	console.log('got post', req.body);
-	res.send('thx');
+// Director Endpoints:
+app.post('/v1/content', function (req, res){
+	console.log('got full content, awesome!', req.body);
+	res.json({status: 200});
 });
 
-app.get('/api/people', function (req, res){
-	console.log('got people request', req.body);
-	res.json([
-		{
-			firstname: 'Sam',
-			lastname: 'Decrock'
-		},
-		{
-			firstname: 'Matthias',
-			lastname: 'Dedinges'
+// UGC Endpoints:
+app.post('/v1/sample', function (req, res){
+	console.log('got sample', req.body);
+	res.json({
+		status: 200,
+		response: {
+			content_id: 'awesomeContentId'
 		}
-	]);
+	});
+});
+
+app.post('/v1/sample/:content_id', function (req, res){
+	console.log('got sample update with content_id:', req.params.content_id);
+	res.json({status: 200});
 });
 
 
