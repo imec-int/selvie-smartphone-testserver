@@ -79,6 +79,27 @@ app.post('/v1/sample/:content_id', function (req, res){
 });
 
 
+// Wireless Broker Endpoints:
+// ======================
+app.post('/v1/device/register/', function (req, res){
+	console.log('got device registration', req.body);
+	res.json({
+		status: 0,
+		response: {
+			ugc: "IP:PORT"
+		}
+	});
+});
+
+app.post('/v1/device/parameter/:client_id/', function (req, res){
+	console.log('got device parameters from', req.params.client_id, req.body);
+	res.json({status: 0});
+});
+
+
+
+
+
 
 
 
