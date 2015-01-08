@@ -44,13 +44,29 @@ wss.on('connection', function (ws) {
 	console.log('socket connected');
 	setTimeout(function () {
 		console.log('sending ping');
-		ws.send(JSON.stringify({message: "content_cancel",request_id: "rid"}));
+		ws.send(JSON.stringify(
+			{
+				// message: "device_reconfig",
+				// commands: ["sdd", "jdjd"]
+				message: "content_request",
+				request_id: "rid",
+				content_id: "coid",
+				contentStartTime:  1420713891313,
+				contentEndTime:  1420713891316,
+				sendStartTime: 1420713891319,
+				sendRate: 358.36
+			})
+		);
 	},5000);
 
 
 	ws.on('message', function (message) {
 		console.log('got pong from socket');
 		console.log(message);
+	});
+
+	ws.on('close', function(){
+		console.log('closed connection');
 	});
 });
 
