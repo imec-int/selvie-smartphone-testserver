@@ -69,6 +69,7 @@ app.put('/v1/sample/:content_id', function (req, res){
 
 // Wireless Broker Endpoints:
 // ======================
+// now in websocket -> obsolete
 app.post('/v1/device/register/', function (req, res){
 	console.log('got device registration', req.body);
 	res.json({
@@ -137,7 +138,7 @@ wss.on('connection', function (ws) {
 	setTimeout(function () {
 		if(!opened) return;
 
-		console.log('sending ping');
+		console.log('sending content_request');
 		ws.send(JSON.stringify(
 			{
 				// message: "device_reconfig",
@@ -155,8 +156,16 @@ wss.on('connection', function (ws) {
 
 
 	ws.on('message', function (message) {
-		console.log('got pong from socket');
+		console.log('got message from socket');
 		console.log(message);
+		var msg = JSON.parse(message);
+		if(msg.message == "device_registration") ws.send(JSON.stringify({
+			status: 0,
+			message: "device_registration",
+			response: {
+				ugc: "IP:PORT"
+			}
+		}));
 	});
 
 	ws.on('close', function(){
