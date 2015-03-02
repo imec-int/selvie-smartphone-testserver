@@ -8,6 +8,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var multer = require('multer')
 var WebSocketServer = require('ws').Server;
+var wsConnection = null;
 
 var app = express();
 
@@ -59,6 +60,23 @@ app.post('/v1/metadata', function (req, res){
 			content_id: uniqueId
 		}
 	});
+	setTimeout(function() {
+		if(wsConnection) {
+			// send content request
+			console.log('sending content_request');
+			wsConnection.send(JSON.stringify(
+				{
+					message: "content_request",
+					request_id: Math.floor(Math.random() * 1000000).toString(36), // generate request_id
+					content_id: uniqueId,
+					contentStartTime:  "1420713891313", // doesn't matter but all strings
+					contentEndTime:  "1420713891316",
+					sendStartTime: "1420713891319",
+					sendRate: "358.36"
+				})
+			);
+		}
+	}, 5000);
 });
 
 app.put('/v1/sample/:content_id', function (req, res){
@@ -125,6 +143,7 @@ var wss = new WebSocketServer({server: webserver});
 // ======================
 wss.on('connection', function (ws) {
 	var opened = true;
+	wsConnection = ws;
 	console.log('socket connected');
 	// setTimeout(function () {
 	// 	if(!opened) return;
@@ -163,6 +182,7 @@ wss.on('connection', function (ws) {
 	});
 
 	ws.on('close', function(){
+		wsConnection = null;
 		console.log('closed connection');
 		opened = false;
 	});
