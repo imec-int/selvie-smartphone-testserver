@@ -175,7 +175,8 @@ wss.on('connection', function (ws) {
 			status: 0,
 			message: "device_registration",
 			response: {
-				ugc: "http://" + ip + ":" + webserver.address().port
+				ugc: "http://" + ip + ":" + webserver.address().port,
+				director: "http://" + ip + ":" + webserver.address().port
 			}
 		}));
 		}
