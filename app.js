@@ -52,7 +52,7 @@ app.post('/v1/content', function (req, res){
 // UGC Endpoints:
 // ======================
 app.post('/v1/metadata', function (req, res){
-	console.log('collector got metadata from: ', req.body.client_id);
+	console.log('collector got metadata: ', req.body);
 	var uniqueId = Date.now().toString(36); // simple id; current time converted to base36 -> unique for this server and for every phone
 	res.json({
 		status: 0,
@@ -69,9 +69,9 @@ app.post('/v1/metadata', function (req, res){
 					message: "content_request",
 					request_id: Math.floor(Math.random() * 1000000).toString(36), // generate request_id
 					content_id: uniqueId,
-					contentStartTime:  "1420713891313", // doesn't matter but all strings
-					contentEndTime:  "1420713891316",
-					sendStartTime: "1420713891319",
+					contentStartTime:  1420713891313, // doesn't matter but all strings
+					contentEndTime:  1420713891316,
+					sendStartTime: 1420713891319,
 					sendRate: "358.36"
 				})
 			);
