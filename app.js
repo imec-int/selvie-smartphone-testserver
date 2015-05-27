@@ -69,7 +69,7 @@ app.post('/v1/metadata', function (req, res){
 					message: "content_request",
 					request_id: Math.floor(Math.random() * 1000000).toString(36), // generate request_id
 					content_id: uniqueId,
-					contentStartTime:  1420713891313, // doesn't matter but all strings
+					contentStartTime:  1420713891313,
 					contentEndTime:  1420713891316,
 					sendStartTime: 1420713891319,
 					sendRate: "358.36"
