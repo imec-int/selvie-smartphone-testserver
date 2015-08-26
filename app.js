@@ -8,7 +8,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var multer = require('multer')
 var WebSocketServer = require('ws').Server;
-var wsConnection = null;
+var wsConnection = {};
 
 var app = express();
 
@@ -48,11 +48,11 @@ app.post('/v1/content', function (req, res){
 	res.json({status: 0});
 });
 
-
 // UGC Endpoints:
 // ======================
 app.post('/v1/metadata', function (req, res){
 	console.log('collector got metadata: ', req.body);
+	var client_id = req.body.client_id;
 	var uniqueId = Date.now().toString(36); // simple id; current time converted to base36 -> unique for this server and for every phone
 	res.json({
 		status: 0,
@@ -61,10 +61,10 @@ app.post('/v1/metadata', function (req, res){
 		}
 	});
 	setTimeout(function() {
-		if(wsConnection) {
+		if(wsConnection[client_id]) {
 			// send content request
 			console.log('sending content_request');
-			wsConnection.send(JSON.stringify(
+			wsConnection[client_id].send(JSON.stringify(
 				{
 					message: "content_request",
 					request_id: Math.floor(Math.random() * 1000000).toString(36), // generate request_id
@@ -143,7 +143,6 @@ var wss = new WebSocketServer({server: webserver});
 // ======================
 wss.on('connection', function (ws) {
 	var opened = true;
-	wsConnection = ws;
 	console.log('socket connected');
 	// setTimeout(function () {
 	// 	if(!opened) return;
@@ -171,6 +170,8 @@ wss.on('connection', function (ws) {
 		var msg = JSON.parse(message);
 		if(msg.message == "device_registration"){
 			var ip = getIpAddress();
+			wsConnection[msg.client_id] = ws;
+			ws.client_id = msg.client_id;
 			ws.send(JSON.stringify({
 			status: 0,
 			message: "device_registration",
@@ -183,7 +184,7 @@ wss.on('connection', function (ws) {
 	});
 
 	ws.on('close', function(){
-		wsConnection = null;
+		delete wsConnection[ws.client_id];
 		console.log('closed connection');
 		opened = false;
 	});
