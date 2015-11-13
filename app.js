@@ -14,16 +14,16 @@ var app = express();
 
 // RAW DATA CHECK:
 // app.use (function (req, res, next) {
-//     var data='';
-//     req.setEncoding('utf8');
-//     req.on('data', function(chunk) {
-//        data += chunk;
-//     });
+// 	var chunks = [];
+// 	req.on('data', function (chunk) {
+// 		chunks.push(chunk);
+// 	});
 
-//     req.on('end', function() {
-//         console.log('RAW DATA', data);
-//         next();
-//     });
+// 	req.on('end', function () {
+// 		var rawbody = Buffer.concat(chunks);
+// 		console.log('RAW DATA', rawbody.toString('utf8'));
+// 		next();
+// 	});
 // });
 
 app.set('port', process.env.PORT || 3000);
