@@ -12,6 +12,20 @@ var wsConnection = {};
 
 var app = express();
 
+// RAW DATA CHECK:
+// app.use (function (req, res, next) {
+//     var data='';
+//     req.setEncoding('utf8');
+//     req.on('data', function(chunk) {
+//        data += chunk;
+//     });
+
+//     req.on('end', function() {
+//         console.log('RAW DATA', data);
+//         next();
+//     });
+// });
+
 app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
