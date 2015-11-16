@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+var fs = require('fs')
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -35,13 +36,23 @@ app.set('view engine', 'ejs');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(multer({ dest: './uploads/'}))
+app.use(multer({ dest: './public/uploads/'}))
 app.use(cookieParser());
 app.use(require('stylus').middleware(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', function(req, res) {
-	res.render('index', { title: 'Express' });
+app.get('/', function (req, res) {
+
+	fs.readdir(__dirname + '/public/uploads/', function (err, files) {
+		if(err) {
+			res.send("foutje");
+			return console.log(err);
+		}
+		console.log(files);
+		res.render('index', { title: 'Selvie Testserver', uploads: files });
+	});
+
+
 });
 
 
