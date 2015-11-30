@@ -224,8 +224,8 @@ function getIpAddress() {
 	Object.keys(ifaces).forEach(function (ifname) {
 
 		ifaces[ifname].forEach(function (iface) {
-			if ('IPv4' !== iface.family|| iface.internal !== false) {
-				// skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+			if ('IPv4' !== iface.family|| iface.internal !== false || ifname.indexOf('vbox') >= 0) {
+				// skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses and vboxes
 				return;
 			}
 			ip = iface.address;
