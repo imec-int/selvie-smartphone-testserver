@@ -9,7 +9,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var multer = require('multer')
 var WebSocketServer = require('ws').Server;
-var wsConnection = {};
+var phoneWebsockets = {};
 
 var app = express();
 
@@ -22,7 +22,9 @@ var app = express();
 
 // 	req.on('end', function () {
 // 		var rawbody = Buffer.concat(chunks);
-// 		console.log('RAW DATA', rawbody.toString('utf8'));
+// 		console.log('RAW DATA');
+// 		console.log(rawbody.toString('utf8'));
+// 		console.log('END RAW DATA');
 // 		next();
 // 	});
 // });
@@ -42,7 +44,6 @@ app.use(require('stylus').middleware(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', function (req, res) {
-
 	fs.readdir(__dirname + '/public/uploads/', function (err, files) {
 		if(err) {
 			res.send("foutje");
@@ -51,8 +52,20 @@ app.get('/', function (req, res) {
 		console.log(files);
 		res.render('index', { title: 'Selvie Testserver', uploads: files });
 	});
+});
 
 
+app.post('/test', function (req, res){
+	console.log("req.body");
+	console.log("==========");
+	console.log(req.body);
+	console.log("");
+	console.log("FILES");
+	console.log("==========");
+	console.log(req.files);
+
+
+	res.send("OK")
 });
 
 
@@ -73,35 +86,24 @@ app.post('/v1/content', function (req, res){
 	res.json({status: 0});
 });
 
+
 // UGC Endpoints:
 // ======================
 app.post('/v1/metadata', function (req, res){
 	console.log('collector got metadata: ', req.body);
 	var client_id = req.body.client_id;
-	var uniqueId = Date.now().toString(36); // simple id; current time converted to base36 -> unique for this server and for every phone
+	var content_id = Date.now().toString(36); // simple id; current time converted to base36 -> unique for this server and for every phone
+
+	// respond with content_id:
 	res.json({
 		status: 0,
 		response: {
-			content_id: uniqueId
+			content_id: content_id
 		}
 	});
-	setTimeout(function() {
-		if(wsConnection[client_id]) {
-			// send content request
-			console.log('sending content_request');
-			wsConnection[client_id].send(JSON.stringify(
-				{
-					message: "content_request",
-					request_id: Math.floor(Math.random() * 1000000).toString(36), // generate request_id
-					content_id: uniqueId,
-					contentStartTime:  1420713891313,
-					contentEndTime:  1420713891316,
-					sendStartTime: 1420713891319,
-					sendRate: "358.36"
-				})
-			);
-		}
-	}, 5000);
+
+	// request content over WS:
+	sendContentRequestToPhone(client_id, content_id)
 });
 
 app.put('/v1/sample/:content_id', function (req, res){
@@ -164,56 +166,83 @@ var webserver = app.listen(app.get('port'), function() {
 
 var wss = new WebSocketServer({server: webserver});
 
-// Websocket Endpoint:
+
+// Wireless Broker Websocket Endpoint:
 // ======================
 wss.on('connection', function (ws) {
-	var opened = true;
-	console.log('socket connected');
-	// setTimeout(function () {
-	// 	if(!opened) return;
+	console.log('incoming websocket', ws.upgradeReq.url);
 
-	// 	console.log('sending content_request');
-	// 	ws.send(JSON.stringify(
-	// 		{
-	// 			// message: "device_reconfig",
-	// 			// commands: ["sdd", "jdjd"]
-	// 			message: "content_request",
-	// 			request_id: "rid",
-	// 			content_id: "coid",
-	// 			contentStartTime:  1420713891313,
-	// 			contentEndTime:  1420713891316,
-	// 			sendStartTime: 1420713891319,
-	// 			sendRate: 358.36
-	// 		})
-	// 	);
-	// },5000);
+	switch(ws.upgradeReq.url) {
+		case '/':
+		phoneConnected(ws);
+		break;
 
+		case '/admin':
+		adminConnected(ws);
+		break;
+	}
+});
+
+
+function phoneConnected (ws) {
+	console.log('phone connected');
 
 	ws.on('message', function (message) {
-		console.log('got message from socket');
-		console.log(message);
 		var msg = JSON.parse(message);
-		if(msg.message == "device_registration"){
+		console.log('got message from socket', msg);
+
+		if(msg.message == "device_registration") {
+
 			var ip = getIpAddress();
-			wsConnection[msg.client_id] = ws;
-			ws.client_id = msg.client_id;
+			console.log("storing phone with client_id", msg.client_id);
+			phoneWebsockets[msg.client_id] = ws;
+			ws.client_id = msg.client_id; // to be able to delete the right websocket from the phoneWebsockets-Dictionary
+
+			// replying to phone:
 			ws.send(JSON.stringify({
-			status: 0,
-			message: "device_registration",
-			response: {
-				ugc: "http://" + ip + ":" + webserver.address().port,
-				director: "http://" + ip + ":" + webserver.address().port
-			}
-		}));
+				status: 0,
+				message: "device_registration",
+				response: {
+					ugc: "http://" + ip + ":" + webserver.address().port,
+					director: "http://" + ip + ":" + webserver.address().port
+					// director: "http://192.168.1.101:3000"
+				}
+			}));
+
+			return;
 		}
 	});
 
 	ws.on('close', function(){
-		delete wsConnection[ws.client_id];
-		console.log('closed connection');
-		opened = false;
+		delete phoneWebsockets[ws.client_id];
+		console.log('phone disconnected');
 	});
-});
+}
+
+
+function sendContentRequestToPhone(client_id, content_id) {
+	console.log('will send content_request in 100ms');
+	setTimeout(function() {
+		if(phoneWebsockets[client_id]) {
+			// send content request
+			console.log('sending content_request to', client_id, "for content_id", content_id);
+			phoneWebsockets[client_id].send(JSON.stringify({
+				message: "content_request",
+				request_id: Math.floor(Math.random() * 1000000).toString(36), // generate request_id
+				content_id: content_id,
+				contentStartTime:  1420713891313,
+				contentEndTime:  1420713891316,
+				sendStartTime: 1420713891319,
+				sendRate: "358.36"
+			}));
+		}
+	}, 100);
+}
+
+
+function adminConnected (ws) {
+	console.log('admin connected');
+}
 
 // webserver.address does not return the correct ip but 0.0.0.0
 // we assume only 1 public ip; last match will win
