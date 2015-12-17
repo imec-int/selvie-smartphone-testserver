@@ -1,0 +1,33 @@
+doctype html5
+html
+	head
+		meta(name='viewport', content='initial-scale=1.0, user-scalable=no')
+		title Selvie Test Viewer
+		link(type='text/fonts', rel='stylesheet', src="/vendor/Roboto")
+		link(rel='stylesheet', href="/stylesheets/viewer.css")
+
+
+	body
+		.content
+
+
+		script(type='text/javascript', src='/vendor/jquery.min.js')
+		script(type='text/javascript', src='/vendor/jquery.tmpl.min.js')
+
+		script(type='text/javascript', src='/vendor/underscore-min.js')
+		script(type='text/javascript', src='/vendor/backbone-min.js')
+
+		script(type='text/javascript', src='/javascripts/viewer.js')
+
+
+		script#video-tmpl(type="text/x-jquery-tmpl")
+			video
+				source(src='${videopath}', type='video/mp4')
+
+		script.
+			$(function(){
+				var viewer = new Viewer();
+				viewer.init();
+			});
+
+

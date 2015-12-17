@@ -9,7 +9,9 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var multer = require('multer')
 var WebSocketServer = require('ws').Server;
+
 var phoneWebsockets = {};
+var viewerWebsockets = {};
 
 var app = express();
 
@@ -31,7 +33,7 @@ var app = express();
 
 app.set('port', process.env.PORT || 3000);
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+app.set('view engine', 'jade');
 
 
 //app.use(favicon(__dirname + '/public/favicon.ico')); // uncomment after placing your favicon in /public
@@ -52,6 +54,10 @@ app.get('/', function (req, res) {
 		console.log(files);
 		res.render('index', { title: 'Selvie Testserver', uploads: files });
 	});
+});
+
+app.get('/viewer', function (req, res) {
+	res.render('viewer', { });
 });
 
 
@@ -84,6 +90,14 @@ app.post('/v1/content', function (req, res){
 
 
 	res.json({status: 0});
+
+
+	// send video to viewer:
+
+	sendToViewer(JSON.stringify({
+		message: "video_uploaded",
+		videopath: "/uploads/" + req.files.binarydata.name
+	}));
 });
 
 
@@ -127,37 +141,32 @@ app.put('/v1/device/parameter/:client_id/', function (req, res){
 // ======================
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
 	var err = new Error('Not Found');
 	err.status = 404;
 	next(err);
 });
 
-// error handlers
+// error handler:
+app.use(function (err, req, res, next) {
+	if(!err.status) err.status = 500;
 
-// development error handler
-// will print stacktrace
-if (app.get('env') === 'development') {
-	app.use(function(err, req, res, next) {
-		res.status(err.status || 500);
-		res.render('error', {
-				message: err.message,
-				error: err
-		});
-		console.log(err);
-	});
-}
+	res.status(err.status);
 
-// production error handler
-// no stacktraces leaked to user
-app.use(function(err, req, res, next) {
-	res.status(err.status || 500);
-	res.render('error', {
-		message: err.message,
-		error: {}
-	});
+	if(err.status == 404)
+		return res.send(err.toString()); // 404 errors are not worth logging.
+
+	if (app.get('env') === 'production'){
+		console.log(err.stack); // log to console
+		return res.send("An error occured: " + err.status); // don't log to user
+	} else {
+		next(err); // log to console and user
+	}
 });
 
+
+// Start webserver:
+// ======================
 
 var webserver = app.listen(app.get('port'), function() {
 	console.log('Express server listening on port ' + webserver.address().port);
@@ -177,8 +186,8 @@ wss.on('connection', function (ws) {
 		phoneConnected(ws);
 		break;
 
-		case '/admin':
-		adminConnected(ws);
+		case '/viewer':
+		viewerConnected(ws);
 		break;
 	}
 });
@@ -240,8 +249,25 @@ function sendContentRequestToPhone(client_id, content_id) {
 }
 
 
-function adminConnected (ws) {
-	console.log('admin connected');
+function viewerConnected (ws) {
+	console.log('viewer connected');
+
+	// create random id for viewer socket:
+	var viewer_id = 'viewer_id_' + Date.now();
+
+	viewerWebsockets[viewer_id] = ws;
+	ws.viewer_id = viewer_id
+
+	ws.on('close', function(){
+		delete viewerWebsockets[ws.viewer_id];
+		console.log('viewer disconnected');
+	});
+}
+
+function sendToViewer(message) {
+	for (var viewer_id in viewerWebsockets) {
+		viewerWebsockets[viewer_id].send(message);
+	}
 }
 
 // webserver.address does not return the correct ip but 0.0.0.0
